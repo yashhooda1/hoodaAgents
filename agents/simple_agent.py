@@ -24,6 +24,5 @@ def run_agent():
             for message in response['messages']:
                 print("Agent:", message.content)
         except KeyboardInterrupt:
-            print("
-Exiting. Goodbye!")
+            print("Exiting. Goodbye!")
             break
