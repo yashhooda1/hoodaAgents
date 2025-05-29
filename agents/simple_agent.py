@@ -5,6 +5,12 @@ from langchain import hub
 from tools.custom_tools import calculator_tool
 from memory.memory_config import get_memory
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+tavily_api_key = os.getenv("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")
+tools = [TavilySearchResults(max_results=3, tavily_api_key=tavily_api_key), calculator_tool]
+
 def run_agent():
     llm = ChatOllama(model="mistral")
     tools = [TavilySearchResults(max_results=3), calculator_tool]
