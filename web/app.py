@@ -5,6 +5,9 @@ from tools.custom_tools import calculator_tool
 from langgraph.prebuilt import create_react_agent
 from langchain import hub
 from memory.memory_config import get_memory
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 st.set_page_config(page_title="hoodaAgents", layout="centered")
 
