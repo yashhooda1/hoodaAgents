@@ -1,8 +1,13 @@
 import sys
 import os
 from dotenv import load_dotenv
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 load_dotenv()
+# 💥 Add this debug line
+print("✅ DEBUG: TAVILY_API_KEY =", os.environ.get("TAVILY_API_KEY"))
+
 import streamlit as st
 from langchain_community.chat_models import ChatOllama
 from langchain_community.tools.tavily_search import TavilySearchResults
