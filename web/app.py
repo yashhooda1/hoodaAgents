@@ -5,8 +5,12 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 load_dotenv()
-# 💥 Add this debug line
-print("✅ DEBUG: TAVILY_API_KEY =", os.environ.get("TAVILY_API_KEY"))
+
+# ✅ Get Tavily key from .env
+tavily_key = os.getenv("TAVILY_API_KEY")
+
+if not tavily_key:
+    raise RuntimeError("TAVILY_API_KEY not found. Please check your .env file.")
 
 import streamlit as st
 from langchain_community.chat_models import ChatOllama
@@ -24,10 +28,14 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 llm = ChatOllama(model="mistral")
-tools = [TavilySearchResults(max_results=3), calculator_tool]
+tools = [
+    TavilySearchResults(max_results=3, tavily_api_key=tavily_key),
+    calculator_tool
+]
 memory = get_memory()
 
-llm_with_tools = llm.bind_tools(tools)
+#llm_with_tools = llm.bind_tools(tools)
+agent_executor = create_react_agent(llm, tools, messages_modifier=prompt)
 prompt = hub.pull("wfh/react-agent-executor")
 agent_executor = create_react_agent(llm_with_tools, tools, messages_modifier=prompt)
 agent_executor.memory = memory
