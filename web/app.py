@@ -35,8 +35,8 @@ tools = [
 memory = get_memory()
 
 #llm_with_tools = llm.bind_tools(tools)
-prompt = hub.pull("wfh/react-agent-executor")
-agent_executor = create_react_agent(llm, tools, prompt)
+#prompt = hub.pull("wfh/react-agent-executor")
+agent_executor = create_react_agent(llm, tools)
 #agent_executor = create_react_agent(llm_with_tools, tools, messages_modifier=prompt)
 agent_executor.memory = memory
 
