@@ -1,8 +1,6 @@
-langgraph
+streamlit
 langchain
-langchain-openai
-langchainhub
-langchain_community
-tiktoken
-chromadb
+python-dotenv
+openai
+langchain-community
 tavily-python
