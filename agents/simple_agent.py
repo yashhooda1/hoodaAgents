@@ -1,8 +1,12 @@
 import os
-from dotenv import load_dotenv
 
-# Load local .env (Streamlit Cloud uses Secrets automatically)
-load_dotenv()
+try:
+    from dotenv import load_dotenv  # local dev
+    load_dotenv()
+except Exception:
+    # On Streamlit Cloud, secrets are injected as env vars already,
+    # so it's safe if python-dotenv isn't installed.
+    pass
 
 from langgraph.prebuilt import create_react_agent
 from langchain import hub
