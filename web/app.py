@@ -1,6 +1,7 @@
 import sys
 import os
 from dotenv import load_dotenv
+from hoodaagents.chat import run_chat
 
 # ✅ Set up project path and environment
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
