@@ -24,8 +24,11 @@ DEFAULT_SYSTEM_PROMPT = (
 )
 
 def build_tools():
-    tavily_key = os.getenv("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")  # set this in .env or Streamlit Secrets
-    tavily = TavilySearchResults(max_results=3, tavily_api_key=tavily_key) if tavily_key else TavilySearchResults(max_results=3)
+    tavily_key = os.getenv("TAVILY_API_KEY")
+    tavily = TavilySearchResults(
+        max_results=3,
+        tavily_api_key=tavily_key
+    )
     return [tavily, calculator_tool]
 
 def build_llm():
