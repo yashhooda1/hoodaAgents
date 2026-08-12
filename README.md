@@ -1,5 +1,7 @@
 # 🧠 hoodaAgents — Web AI Agent Framework Powered by OpenAI GPT-4
 
+# NOW LIVE ON 🦙 Ollama Model: https://ollama.com/hoodarunner/hoodaAgents
+
 **hoodaAgents** is a next-gen, web-based AI assistant framework powered by **OpenAI GPT-4**, built using **LangChain**, **Tavily**, and **Streamlit**. This version of hoodaAgents runs entirely through a user-friendly browser interface and connects powerful LLM capabilities with real-time web tools and memory.
 
 It serves as a production-ready template for building intelligent AI agents that can:
