@@ -147,7 +147,12 @@ class ToolRegistry:
         for name, value in arguments.items():
             expected = properties.get(name, {}).get("type")
             python_type = expected_python_types.get(expected)
-            if python_type is not None and not isinstance(value, python_type):
+            boolean_as_number = (
+                expected in {"integer", "number"} and isinstance(value, bool)
+            )
+            if python_type is not None and (
+                boolean_as_number or not isinstance(value, python_type)
+            ):
                 raise ToolError(f"Argument '{name}' must be {expected}")
 
 
