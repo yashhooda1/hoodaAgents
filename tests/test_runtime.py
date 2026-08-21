@@ -4,32 +4,22 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
-import requests
-
-from hooda_agents.client import OllamaClient, OllamaError
+from hooda_agents.client import (
+    HTTPTransportError,
+    OllamaClient,
+    OllamaError,
+)
 from hooda_agents.config import Settings
 from hooda_agents.memory import ConversationStore
 
 
-class FakeResponse:
-    def __init__(self, payload):
-        self.payload = payload
-        self.text = str(payload)
-
-    def raise_for_status(self):
-        return None
-
-    def json(self):
-        return self.payload
-
-
-class FakeSession:
+class FakeTransport:
     def __init__(self, response):
         self.response = response
         self.calls = []
 
-    def post(self, url, *, json, timeout):
-        self.calls.append({"url": url, "json": json, "timeout": timeout})
+    def __call__(self, url, payload, timeout):
+        self.calls.append({"url": url, "payload": payload, "timeout": timeout})
         return self.response
 
 
@@ -63,7 +53,7 @@ class ConfigurationTests(unittest.TestCase):
 
 class OllamaClientTests(unittest.TestCase):
     def test_sends_native_agent_payload(self):
-        session = FakeSession(FakeResponse({"message": {"content": "hello"}}))
+        transport = FakeTransport({"message": {"content": "hello"}})
         settings = Settings(
             ollama_base_url="http://localhost:11434",
             model="test-model",
@@ -71,7 +61,7 @@ class OllamaClientTests(unittest.TestCase):
             context_length=8192,
             request_timeout_seconds=12,
         )
-        client = OllamaClient(settings, session=session)
+        client = OllamaClient(settings, transport=transport)
         tools = [{"type": "function", "function": {"name": "calculator"}}]
 
         message = client.chat(
@@ -80,21 +70,22 @@ class OllamaClientTests(unittest.TestCase):
         )
 
         self.assertEqual({"content": "hello"}, message)
-        request = session.calls[0]
+        request = transport.calls[0]
         self.assertEqual(
             "http://localhost:11434/api/chat",
             request["url"],
         )
-        self.assertEqual("test-model", request["json"]["model"])
-        self.assertEqual(tools, request["json"]["tools"])
-        self.assertTrue(request["json"]["think"])
-        self.assertEqual(8192, request["json"]["options"]["num_ctx"])
+        self.assertEqual("test-model", request["payload"]["model"])
+        self.assertEqual(tools, request["payload"]["tools"])
+        self.assertTrue(request["payload"]["think"])
+        self.assertEqual(8192, request["payload"]["options"]["num_ctx"])
         self.assertEqual(12, request["timeout"])
 
     def test_wraps_connection_errors_with_actionable_message(self):
-        session = mock.Mock()
-        session.post.side_effect = requests.ConnectionError("refused")
-        client = OllamaClient(Settings(), session=session)
+        def failing_transport(url, payload, timeout):
+            raise HTTPTransportError("connection refused")
+
+        client = OllamaClient(Settings(), transport=failing_transport)
 
         with self.assertRaisesRegex(OllamaError, "Confirm that Ollama is running"):
             client.chat([{"role": "user", "content": "hi"}])
