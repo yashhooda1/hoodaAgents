@@ -1,16 +1,18 @@
-from langchain.tools import Tool
-import math
+"""Compatibility exports for hoodaAgents tools."""
 
-def simple_calculator(query: str) -> str:
-    try:
-        result = eval(query, {"__builtins__": None, "math": math})
-        return f"The result is: {result}"
-    except Exception as e:
-        return f"Error: {str(e)}"
+from hooda_agents.tools import ToolSpec, calculate
 
-calculator_tool = Tool(
-    name="Simple Calculator",
-    func=simple_calculator,
-    description="Useful for simple math calculations. Input: a valid math expression."
+simple_calculator = calculate
+calculator_tool = ToolSpec(
+    name="calculator",
+    description="Safely evaluate a bounded arithmetic expression.",
+    parameters={
+        "type": "object",
+        "required": ["expression"],
+        "properties": {"expression": {"type": "string"}},
+        "additionalProperties": False,
+    },
+    handler=calculate,
 )
 
+__all__ = ["calculator_tool", "simple_calculator"]
