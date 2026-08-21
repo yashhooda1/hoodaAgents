@@ -64,6 +64,10 @@ class ConversationStore:
         session_id = _validate_session_id(session_id)
         if limit <= 0:
             return []
+        # Persisted turns are user/assistant pairs; never return an orphaned half-turn.
+        limit -= limit % 2
+        if limit == 0:
+            return []
 
         with self._lock:
             rows = self._connection.execute(
