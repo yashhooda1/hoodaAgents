@@ -35,6 +35,7 @@ with st.sidebar:
         value=base_settings.memory_enabled,
     )
     show_trace = st.toggle("Show tool trace", value=True)
+    show_thinking = st.toggle("Show model thinking", value=False)
     st.caption(f"Ollama: {base_settings.ollama_base_url}")
 
 
@@ -80,7 +81,7 @@ if prompt:
             if event_payload and show_trace:
                 with st.expander("Tool trace"):
                     st.json(event_payload)
-            if result.thinking and show_trace:
+            if result.thinking and show_thinking:
                 with st.expander("Model thinking"):
                     st.write("\n\n".join(result.thinking))
             st.session_state.messages.append(
