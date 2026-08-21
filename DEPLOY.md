@@ -1,53 +1,64 @@
-# 🚀 Deployment Guide for hoodaAgents
+# Deployment and publishing
 
-This guide shows you how to deploy hoodaAgents locally or online.
+hoodaAgents has two independently deployable pieces:
 
----
+1. The Ollama model produced from `Modelfile`
+2. The optional Python runtime that adds memory, tools, evaluations, CLI, and UI
 
-## ✅ Local Setup
-
-### 1. Install Dependencies
-
-```bash
-pip install -r config/requirements.txt streamlit
-```
-
-### 2. Install Ollama & Pull Model
+## Local installation
 
 ```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull hoodarunner/hoodaAgents
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r config/requirements.txt
+cp .env.example .env
+
+ollama pull qwen3.5:9b
+ollama create hoodaAgents -f Modelfile
+OLLAMA_MODEL=hoodaAgents python main.py
 ```
 
-### 3. Run Locally in Terminal
+Ollama must remain reachable at `OLLAMA_BASE_URL`. The default is
+`http://localhost:11434`.
+
+## Validate before publishing
 
 ```bash
-python main.py
+python -m compileall -q .
+python -m unittest discover -s tests -v
+python evals/run_evals.py --model hoodaAgents
 ```
 
-### 4. Run Web UI with Streamlit
+Do not publish a model that fails the configured live-evaluation threshold.
+
+## Publish on ollama.com
 
 ```bash
-streamlit run web/app.py
+ollama signin
+ollama cp hoodaAgents hoodarunner/hoodaAgents
+ollama push hoodarunner/hoodaAgents
 ```
 
----
+Confirm from a clean model name:
 
-## 🌐 Optional: Deploy on Hugging Face Spaces
+```bash
+ollama rm hoodarunner/hoodaAgents
+ollama run hoodarunner/hoodaAgents
+```
 
-- Create a `Space` with Python + Streamlit runtime
-- Upload your files
-- Include a `requirements.txt` with `ollama`, `streamlit`, etc.
-- Set up a `Modelfile` and configure Ollama on the backend
+## Streamlit UI
 
----
+```bash
+OLLAMA_MODEL=hoodaAgents streamlit run web/app.py
+```
 
-## ✈️ Optional: Deploy on Fly.io or Render.com
+The UI server and Ollama may run on different hosts by setting
+`OLLAMA_BASE_URL`. Do not expose an unauthenticated Ollama daemon directly to
+the public internet.
 
-- Containerize the app with `Dockerfile` (not included yet)
-- Use Fly.io’s CLI or Render's web UI to deploy
-- You may need to host Ollama separately or use CPU-based models
+## Secrets and state
 
----
-
-Built with ❤️ by [Yash Hooda](https://github.com/yashhooda1)
+- Store configuration in an ignored `.env`, never in Git.
+- SQLite memory defaults to `~/.hoodaagents/memory.db`.
+- Set `HOODA_MEMORY=off` for stateless or shared deployments.
+- `TAVILY_API_KEY` is optional; without it, web search is not registered.
