@@ -7,7 +7,11 @@ import json
 from dataclasses import replace
 from typing import Sequence
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv() -> bool:
+        return False
 
 from hooda_agents.agent import AgentError, AgentResult, build_agent
 from hooda_agents.client import OllamaError
