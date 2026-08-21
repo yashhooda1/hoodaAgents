@@ -1,16 +1,60 @@
-"""Small, testable client for Ollama's native chat API."""
+"""Small, dependency-free client for Ollama's native chat API."""
 
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
-
-import requests
+import json
+from typing import Any, Callable, Mapping, Sequence
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from hooda_agents.config import Settings
 
 
+class HTTPTransportError(RuntimeError):
+    """Raised when a JSON HTTP request fails."""
+
+
 class OllamaError(RuntimeError):
     """Raised when Ollama is unavailable or returns an invalid response."""
+
+
+JSONTransport = Callable[[str, Mapping[str, Any], float], dict[str, Any]]
+
+
+def post_json(
+    url: str,
+    payload: Mapping[str, Any],
+    timeout: float,
+) -> dict[str, Any]:
+    request = Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            raw_body = response.read()
+    except HTTPError as exc:
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+        except OSError:
+            detail = str(exc)
+        raise HTTPTransportError(f"HTTP {exc.code}: {detail}") from exc
+    except (URLError, OSError) as exc:
+        raise HTTPTransportError(str(exc)) from exc
+
+    try:
+        data = json.loads(raw_body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HTTPTransportError("server returned invalid JSON") from exc
+
+    if not isinstance(data, dict):
+        raise HTTPTransportError("server returned a non-object JSON response")
+    return data
 
 
 class OllamaClient:
@@ -18,10 +62,10 @@ class OllamaClient:
         self,
         settings: Settings,
         *,
-        session: requests.Session | None = None,
+        transport: JSONTransport = post_json,
     ) -> None:
         self.settings = settings
-        self.session = session or requests.Session()
+        self.transport = transport
 
     def chat(
         self,
@@ -47,26 +91,16 @@ class OllamaClient:
 
         url = f"{self.settings.ollama_base_url}/api/chat"
         try:
-            response = self.session.post(
+            data = self.transport(
                 url,
-                json=payload,
-                timeout=self.settings.request_timeout_seconds,
+                payload,
+                self.settings.request_timeout_seconds,
             )
-            response.raise_for_status()
-        except requests.RequestException as exc:
-            detail = ""
-            response_obj = getattr(exc, "response", None)
-            if response_obj is not None:
-                detail = f": {response_obj.text[:500]}"
+        except HTTPTransportError as exc:
             raise OllamaError(
-                f"Ollama request failed at {url}{detail}. "
+                f"Ollama request failed at {url}: {exc}. "
                 "Confirm that Ollama is running and the configured model is installed."
             ) from exc
-
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise OllamaError("Ollama returned a non-JSON response") from exc
 
         message = data.get("message")
         if not isinstance(message, dict):
