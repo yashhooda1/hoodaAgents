@@ -1,16 +1,21 @@
-from langchain.schema import HumanMessage, AIMessage
-from agents.simple_agent import create_agent  # reuse your existing logic
+"""Compatibility chat entry point backed by the native Ollama agent."""
 
-_agent = create_agent()
+from __future__ import annotations
 
-def run_chat(query: str, history=None):
-    messages = []
-    if history:
-        for role, msg in history:
-            if role == "user":
-                messages.append(HumanMessage(content=msg))
-            else:
-                messages.append(AIMessage(content=msg))
-    messages.append(HumanMessage(content=query))
-    result = _agent.invoke(messages)
-    return result.content
+from hooda_agents import HoodaAgent, build_agent
+
+_agent: HoodaAgent | None = None
+
+
+def run_chat(
+    query: str,
+    history=None,
+    *,
+    session_id: str = "default",
+) -> str:
+    """Run one turn; persisted local memory replaces caller-managed history."""
+
+    global _agent
+    if _agent is None:
+        _agent = build_agent()
+    return _agent.run(query, session_id=session_id).text
