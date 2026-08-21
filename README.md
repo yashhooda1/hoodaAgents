@@ -1,109 +1,190 @@
-# 🧠 hoodaAgents — Web AI Agent Framework Powered by OpenAI GPT-4
+# hoodaAgents
 
-# NOW LIVE ON 🦙 Ollama Model: https://ollama.com/hoodarunner/hoodaAgents
+A local-first AI agent runtime built for Ollama: native multi-step tool calling,
+bounded local memory, optional live search, structured outputs, and measurable
+capability evaluations.
 
-**hoodaAgents** is a next-gen, web-based AI assistant framework powered by **OpenAI GPT-4**, built using **LangChain**, **Tavily**, and **Streamlit**. This version of hoodaAgents runs entirely through a user-friendly browser interface and connects powerful LLM capabilities with real-time web tools and memory.
+**Ollama model:** [hoodarunner/hoodaAgents](https://ollama.com/hoodarunner/hoodaAgents)
 
-It serves as a production-ready template for building intelligent AI agents that can:
+hoodaAgents does not require an OpenAI or Anthropic key. The core agent talks
+directly to Ollama's local `/api/chat` endpoint and continues through a bounded
+tool loop until the model produces a final answer.
 
-- 💬 Answer user queries with contextual memory
-- 🔍 Perform live web research using Tavily
-- 🔧 Be extended with custom tools (like a calculator)
-- 🧠 Maintain dynamic multi-turn conversations
-- 🌐 Run in your browser via Streamlit
+## Capabilities
 
----
+- Native Ollama multi-turn and parallel tool calling
+- Thinking support with traces hidden unless explicitly requested
+- Schema-constrained JSON responses
+- Local SQLite conversation memory with named sessions and bounded history
+- Safe AST-based calculator with no `eval` or shell execution
+- Timezone-aware date/time tool
+- Optional Tavily web search; offline tools work without any API key
+- Allow-listed tools, argument validation, output truncation, and loop limits
+- CLI, Python API, and Streamlit UI
+- Deterministic unit tests plus a live Ollama evaluation harness
 
-## 🚀 Why hoodaAgents?
+The Modelfile now uses `qwen3.5:9b`, a tool-capable, thinking-capable,
+multimodal model. The runtime remains model-configurable for smaller or larger
+hardware.
 
-In an age of bloated, black-box AI apps, **hoodaAgents** gives you control and flexibility. Whether you're a developer, researcher, student, or builder — you can use this agent to power your personal assistant, test custom workflows, or extend it into your own AI product.
+## Architecture
 
----
+```mermaid
+flowchart TD
+    User["CLI or Streamlit"] --> Agent["Bounded agent loop"]
+    Agent --> Ollama["Local Ollama /api/chat"]
+    Ollama --> Agent
+    Agent --> Tools["Allow-listed tools"]
+    Tools --> Agent
+    Agent <--> Memory["Local SQLite memory"]
+```
 
-## 🛠️ Built With
+Tool results are treated as untrusted data. Only final user and assistant
+messages enter persistent memory; intermediate thinking and tool payloads do
+not.
 
-- **OpenAI GPT-4** – LLM for reasoning and dialogue
-- **LangChain** – Agent orchestration and tool routing
-- **Tavily** – Fast real-time search for relevant info
-- **Streamlit** – Clean browser-based UI
-- **Python** – Modular and extensible backend
+## Quick start
 
----
-
-## 🧩 Project Use Cases
-
-- Personal AI chatbot
-- Web-based AI search agent
-- Custom GPT-4 playground
-- Prompt engineering sandbox
-- Data-driven productivity tool
-
----
-
-## 📁 Project Structure
-hoodaAgents/
-├── web/
-│ └── app.py # Streamlit UI entry point
-├── tools/
-│ └── custom_tools.py # Calculator and other tools
-├── memory/
-│ └── memory_config.py # Memory setup using LangChain
-├── config/
-│ └── requirements.txt # Python dependencies
-├── .env # API keys (keep this secret!)
-└── README.md # Project documentation (you’re here!)
-
-
----
-
-## 🧪 Getting Started
-
-1. **Clone the repo**
+Requires Python 3.11+ and a running Ollama installation.
 
 ```bash
 git clone https://github.com/yashhooda1/hoodaAgents.git
 cd hoodaAgents
+
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r config/requirements.txt
+cp .env.example .env
+
+ollama pull qwen3.5:9b
+ollama create hoodaAgents -f Modelfile
+OLLAMA_MODEL=hoodaAgents python main.py
 ```
 
-2. **Install dependencies**
+Run one prompt:
 
-bash
-Copy
-Edit
-pip install -r config/requirements.txt
-Add your API keys
+```bash
+OLLAMA_MODEL=hoodaAgents python main.py --no-memory \
+  "Use the calculator to compute sqrt(144) + 7"
+```
 
-3. **Create a .env file in the root with:**
+Run the web UI:
 
-ini
-Copy
-Edit
-OPENAI_API_KEY=your_openai_key_here
-TAVILY_API_KEY=your_tavily_key_here
+```bash
+OLLAMA_MODEL=hoodaAgents streamlit run web/app.py
+```
 
-4. **Run the app**
+Run the published model directly:
 
-bash
-Copy
-Edit
-streamlit run web/app.py
+```bash
+ollama run hoodarunner/hoodaAgents
+```
 
-🎥 Demo Video
-▶️ Watch hoodaAgents in action (YouTube)
+## Configuration
 
-🛠️ Customize Your Agent
-Modify web/app.py, custom_tools.py, or memory_config.py to:
+Copy `.env.example` to `.env`. The important settings are:
 
-Swap GPT-4 with other OpenAI models
+| Variable | Default | Purpose |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Local Ollama server |
+| `OLLAMA_MODEL` | `hoodarunner/hoodaAgents` | Model used by the runtime |
+| `OLLAMA_CONTEXT_LENGTH` | `32768` | Agent context window |
+| `HOODA_THINK` | `true` | Boolean or supported thinking level |
+| `HOODA_MAX_STEPS` | `8` | Hard tool-loop bound |
+| `HOODA_MEMORY` | `on` | Enable local SQLite memory |
+| `HOODA_MEMORY_PATH` | `~/.hoodaagents/memory.db` | Local memory database |
+| `TAVILY_API_KEY` | unset | Enables optional live web search |
 
-Add new tools (e.g. weather, calendar, file parsing)
+When `TAVILY_API_KEY` is absent, `web_search` is not registered and the
+agent stays fully local.
 
-Integrate vector DBs or APIs
+## Python API
 
-Change UI layout in Streamlit
+```python
+from hooda_agents import build_agent
 
-✅ Live Demo on Website
-Check it out on my personal website and GitHub profile.
+agent = build_agent()
+result = agent.run(
+    "Calculate 18 * 7 and give me the current date in UTC.",
+    session_id="demo",
+)
 
-Made with ❤️ by Yash Hooda
-Let’s redefine what intelligent agents can do — your way.
+print(result.text)
+print([event.as_dict() for event in result.tool_events])
+```
+
+Schema-constrained output:
+
+```python
+schema = {
+    "type": "object",
+    "required": ["summary", "priority"],
+    "properties": {
+        "summary": {"type": "string"},
+        "priority": {"type": "integer"},
+    },
+}
+
+payload = agent.complete_json("Classify this task...", schema)
+```
+
+## Quality gates
+
+Unit tests do not need a live model:
+
+```bash
+python -m compileall -q .
+python -m unittest discover -s tests -v
+```
+
+The live evaluation harness measures real model tool selection and completion:
+
+```bash
+python evals/run_evals.py --model hoodaAgents
+```
+
+The current scenarios cover direct answers, calculator use, current-time use,
+and parallel tool selection. Add scenarios before claiming new capabilities.
+
+## Publish to Ollama
+
+Build and evaluate locally before updating the public model:
+
+```bash
+ollama pull qwen3.5:9b
+ollama create hoodaAgents -f Modelfile
+python evals/run_evals.py --model hoodaAgents
+
+ollama signin
+ollama cp hoodaAgents hoodarunner/hoodaAgents
+ollama push hoodarunner/hoodaAgents
+```
+
+## Security
+
+- Never commit `.env`, credentials, or memory databases.
+- Any credential ever committed to Git history must remain revoked; deleting
+  the current file does not remove historical copies.
+- Tools are registered explicitly. There is no shell, filesystem-write, or
+  arbitrary-code tool.
+- Calculator expressions are parsed through a restricted AST.
+- Tool errors are returned to the model without crashing the process.
+- Prompt size, history, tool output, and agent steps are bounded.
+
+## Project structure
+
+```text
+hooda_agents/
+  agent.py       bounded orchestration loop
+  client.py      native Ollama HTTP client
+  config.py      validated environment settings
+  memory.py      local SQLite session memory
+  tools.py       schemas, registry, and safe tools
+  cli.py         interactive and one-shot interface
+web/app.py       Streamlit interface
+evals/           live capability evaluation
+tests/           deterministic unit tests
+Modelfile        publishable Ollama model blueprint
+```
+
+Built by [Yash Hooda](https://yashhooda.ai).

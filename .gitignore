@@ -1,23 +1,23 @@
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
 *.db
 
-# Virtual Environments
+# Virtual environments
 env/
 venv/
 .venv/
 
-# VSCode
+# Editors and operating systems
 .vscode/
-
-# System
 .DS_Store
 Thumbs.db
 
-# Logs
+# Runtime state
+.hoodaagents/
 *.log
 
 # Build
@@ -27,6 +27,8 @@ build/
 
 # Secrets
 .env
+.env.*
+!.env.example
 
-# Compressed
+# Archives
 *.zip

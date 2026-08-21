@@ -1,0 +1,26 @@
+[
+  {
+    "id": "calculator",
+    "prompt": "Use the calculator to compute sqrt(144) + 7. Return only the result.",
+    "expected_tools": ["calculator"],
+    "answer_contains": ["19"]
+  },
+  {
+    "id": "current-time",
+    "prompt": "What is the current time in America/Chicago? Use the time tool.",
+    "expected_tools": ["current_datetime"],
+    "answer_contains": []
+  },
+  {
+    "id": "parallel-tools",
+    "prompt": "In one response, calculate 18 * 7 and tell me the current date in UTC. Use both relevant tools.",
+    "expected_tools": ["calculator", "current_datetime"],
+    "answer_contains": ["126"]
+  },
+  {
+    "id": "direct-answer",
+    "prompt": "In one sentence, explain what local-first AI means.",
+    "expected_tools": [],
+    "answer_contains": ["local"]
+  }
+]

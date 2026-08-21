@@ -1,4 +1,5 @@
-from agents.simple_agent import run_agent
+from hooda_agents.cli import main
+
 
 if __name__ == "__main__":
-    run_agent()
+    raise SystemExit(main())

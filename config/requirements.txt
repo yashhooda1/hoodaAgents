@@ -1,14 +1,2 @@
-streamlit>=1.35
-python-dotenv>=1.0
-
-langchain>=0.2,<0.3
-langchain-community>=0.2,<0.3
-langchain-openai>=0.1
-# for local Ollama mode (optional)
-# langchain-ollama>=0.1
-
-langgraph>=0.2
-langchainhub>=0.1
-
-tavily-python>=0.5
-openai>=1.40
+python-dotenv>=1.0,<2
+streamlit>=1.40,<2
