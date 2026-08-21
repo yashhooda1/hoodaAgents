@@ -77,6 +77,28 @@ class ToolRegistryTests(unittest.TestCase):
         self.assertEqual("error", unexpected.status)
         self.assertIn("Unexpected arguments", unexpected.output)
 
+    def test_rejects_boolean_as_integer(self):
+        registry = ToolRegistry()
+        registry.register(
+            ToolSpec(
+                name="count",
+                description="count",
+                parameters={
+                    "type": "object",
+                    "required": ["value"],
+                    "properties": {"value": {"type": "integer"}},
+                },
+                handler=lambda value: value,
+            )
+        )
+
+        event = registry.execute_call(
+            {"function": {"name": "count", "arguments": {"value": True}}}
+        )
+
+        self.assertEqual("error", event.status)
+        self.assertIn("must be integer", event.output)
+
     def test_truncates_tool_output(self):
         registry = ToolRegistry(max_output_chars=5)
         registry.register(
