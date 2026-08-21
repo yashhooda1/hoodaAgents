@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Callable, Mapping
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-import requests
+from hooda_agents.client import post_json
 
 
 class ToolError(ValueError):
@@ -271,19 +271,17 @@ def _build_web_search(api_key: str) -> Callable[..., dict[str, Any]]:
         if not 1 <= max_results <= 10:
             raise ToolError("max_results must be between 1 and 10")
 
-        response = requests.post(
+        payload = post_json(
             "https://api.tavily.com/search",
-            json={
+            {
                 "api_key": api_key,
                 "query": query,
                 "max_results": max_results,
                 "search_depth": "advanced",
                 "include_answer": False,
             },
-            timeout=30,
+            30,
         )
-        response.raise_for_status()
-        payload = response.json()
         results = [
             {
                 "title": item.get("title", ""),
