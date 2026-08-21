@@ -92,7 +92,7 @@ class OllamaClientTests(unittest.TestCase):
 
 
 class MemoryTests(unittest.TestCase):
-    def test_load_is_bounded_and_ordered(self):
+    def test_load_is_bounded_ordered_and_keeps_complete_turns(self):
         with TemporaryDirectory() as tmp:
             store = ConversationStore(Path(tmp) / "memory.db")
             store.append_exchange("s", "u1", "a1")
@@ -102,7 +102,6 @@ class MemoryTests(unittest.TestCase):
 
             self.assertEqual(
                 [
-                    {"role": "assistant", "content": "a1"},
                     {"role": "user", "content": "u2"},
                     {"role": "assistant", "content": "a2"},
                 ],
